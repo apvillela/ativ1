@@ -41,9 +41,9 @@ public class VetorEstatico {
     }
 
     public void removerNoFinal() {
-        if (obterTamanho() == 0) {
+        if (tamanho == 0) {
         } else {
-            elementos[obterTamanho()] = null;
+            elementos[tamanho] = null;
             tamanho--;
         }
     }

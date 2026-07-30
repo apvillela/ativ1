@@ -7,10 +7,11 @@ public class Gerente {
     private double salario_final;
     private int projeto_finalizados;
 
-    public double calcula_salario_final(){
+    public double calcula_salario_final() {
         double salario_final_calculado = salario_base * (projeto_finalizados * 0.10);
         return salario_final_calculado;
     }
+
     public String getNome() {
         return nome;
     }

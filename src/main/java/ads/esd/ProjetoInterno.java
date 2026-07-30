@@ -9,26 +9,27 @@ public class ProjetoInterno {
     private String nome;
     private Gerente gerente;
     private boolean is_finalizado;
-    public void add_funcionario(Funcionario funcionario){
+
+    public void add_funcionario(Funcionario funcionario) {
         funcionarios.add(funcionario);
     }
 
-    public double get_salarios_bruto(){
+    public double get_salarios_bruto() {
         double custo_salarios_funcionarios_final = 0;
         for (int i = 0; i < funcionarios.size(); i++) {
             custo_salarios_funcionarios_final += funcionarios.get(i).getSalario_base();
         }
-        double salario_gerente = gerente.getSalario_base() * (funcionarios.size()*1.01);
+        double salario_gerente = gerente.getSalario_base() * (funcionarios.size() * 1.01);
 
-        return salario_gerente+custo_salarios_funcionarios_final;
+        return salario_gerente + custo_salarios_funcionarios_final;
     }
+
     public double getCusto() {
         if (is_finalizado) {// extrair pra um método getsalariostotalbonus
 
             return get_salarios_bruto();
-        }
-        else {
-            return get_salarios_bruto()* 1.1;
+        } else {
+            return get_salarios_bruto() * 1.1;
         }
     }
 
@@ -38,7 +39,8 @@ public class ProjetoInterno {
         this.nome = nome;
         this.funcionarios = new ArrayList<>();
     }
-    public void finaliza_projeto(){
+
+    public void finaliza_projeto() {
         is_finalizado = true;
     }
 
@@ -46,7 +48,7 @@ public class ProjetoInterno {
     public String toString() {
         return "Projeto{ " + nome +
                 " funcionarios=" + funcionarios.toString() +
-                ", gerente=" + gerente.getNome() + "custo "+ getCusto() +
+                ", gerente=" + gerente.getNome() + "custo " + getCusto() +
                 '}';
     }
 

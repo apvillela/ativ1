@@ -11,10 +11,10 @@ public class Main {
         //rodo o tostring que aparece as infos do projeto
         Gerente ramon = new Gerente();
         ramon.setNome("ramon");
-        Funcionario villela = new Funcionario("villela",3100);
-        Funcionario lucas = new Funcionario("lucas",3100);
+        Funcionario villela = new Funcionario("villela", 3100);
+        Funcionario lucas = new Funcionario("lucas", 3100);
 
-        ProjetoInterno projeto = new ProjetoInterno("visualizador",ramon);
+        ProjetoInterno projeto = new ProjetoInterno("visualizador", ramon);
         projeto.add_funcionario(villela);
         projeto.add_funcionario(lucas);
         print(projeto.toString());

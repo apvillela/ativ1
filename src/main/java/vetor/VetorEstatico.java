@@ -22,14 +22,15 @@ public class VetorEstatico {
 
     public void inserir(int indice, String elemento) {
         if (tamanho >= elementos.length) {
-
+            System.out.println("Vetor cheio");
+            return;
         }
         if (indice < 0 || indice > elementos.length) {
             System.out.println("posição inválida");
+            return;
         }
-        for (int i = 0; i > indice; i++) {
+        for (int i = tamanho; i > indice; i--) {
             elementos[i] = elementos[i - 1];
-
         }
         elementos[indice] = elemento;
         tamanho++;
@@ -42,8 +43,9 @@ public class VetorEstatico {
 
     public void removerNoFinal() {
         if (tamanho == 0) {
+            System.out.println("Vetor vazio");
         } else {
-            elementos[tamanho] = null;
+            elementos[tamanho - 1] = null;
             tamanho--;
         }
     }
@@ -60,10 +62,12 @@ public class VetorEstatico {
     public void imprimir() {
         System.out.print("[");
         for (int i = 0; i < elementos.length; i++) {
-            System.out.print(elementos[i] + ", ");
-
+            System.out.print(elementos[i]);
+            if (i < elementos.length - 1) {
+                System.out.print(", ");
+            }
         }
-        System.out.print("]");
+        System.out.println("]");
 
     }
 

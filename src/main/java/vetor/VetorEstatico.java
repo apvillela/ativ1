@@ -25,7 +25,7 @@ public class VetorEstatico {
             System.out.println("Vetor cheio");
             return;
         }
-        if (indice < 0 || indice > elementos.length) {
+        if (indice < 0 || indice > tamanho) {
             System.out.println("posição inválida");
             return;
         }
@@ -42,6 +42,14 @@ public class VetorEstatico {
     }
 
     public void removerNoFinal() {
+        if (tamanho == 0) {
+            System.out.println("Vetor vazio");
+        } else {
+            elementos[tamanho - 1] = null;
+            tamanho--;
+        }
+    }
+    public void remover(int indice) {
         if (tamanho == 0) {
             System.out.println("Vetor vazio");
         } else {

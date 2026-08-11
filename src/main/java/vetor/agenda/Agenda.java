@@ -52,9 +52,9 @@ public class Agenda {
     }
 
     public Contato buscarPorNome(String nome) {
-        for (int i = 0; i < tamanho; i++) {
-            if (contatos[i].getNome().equals(nome)) {
-                return contatos[i];
+        for (int i = 0; i < tamanho; i++) {//for que percorre o tamanho da agenda,
+            if (contatos[i].getNome().equals(nome)) {// se a posição da agenda tiver um contato com nome igual
+                return contatos[i];//retorna o contato dessa posição
             }
         }
         return null;
@@ -114,4 +114,11 @@ public class Agenda {
         }
         System.out.println("]");
     }
+    public void inserirEmLote(Contato[] novos){
+        for (Contato contato : novos){
+            if(contato!= null)
+                adicionarContato(contato);
+        }
+    }
+
 }

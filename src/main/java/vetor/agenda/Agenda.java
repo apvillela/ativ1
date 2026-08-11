@@ -10,22 +10,37 @@ public class Agenda {
         this.tamanho = 0;
     }
 
+    // retorna a posição do contato, ou -1 se não existir
+    public int indiceDeNome(String nome) {
+        for (int i = 0; i < tamanho; i++) {//for que percorre o tamanho da agenda,
+            if (contatos[i].getNome().equals(nome)) {// se a posição da agenda tiver um contato com nome igual
+                return i;//retorna a posição
+            }
+        }
+        return -1;
+    }
+
+    public int indiceDeTelefone(String telefone) {
+        for (int i = 0; i < tamanho; i++) {
+            if (contatos[i].getTelefone().equals(telefone)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
     public void adicionarContato(Contato contato) {
         if (tamanho >= contatos.length) {
             System.out.println("Agenda cheia");
-             return;
+            return;
         }
-        for (int i = 0; i < tamanho; i++) {
-            if (contatos[i].getNome().equals(contato.getNome())) {//bate o cntato querendo ser adicionado cm a agenda completa
-                System.out.println("Nome já cadastrado");
-                return;
-            }
+        if (indiceDeNome(contato.getNome()) != -1) {
+            System.out.println("Nome já cadastrado");
+            return;
         }
-        for (int i = 0; i < tamanho; i++) {
-            if (contatos[i].getTelefone().equals(contato.getTelefone())) {
-                System.out.println("Telefone já cadastrado");
-                return;
-            }
+        if (indiceDeTelefone(contato.getTelefone()) != -1) {
+            System.out.println("Telefone já cadastrado");
+            return;
         }
         contatos[tamanho] = contato;//bota no fim
         tamanho++;
@@ -33,13 +48,7 @@ public class Agenda {
     }
 
     public void removerContato(String nome) {
-        int indice = -1;
-        for (int i = 0; i < tamanho; i++) {
-            if (contatos[i].getNome().equals(nome)) {
-                indice = i;
-                break;
-            }
-        }
+        int indice = indiceDeNome(nome);
         if (indice == -1) {
             System.out.println("Contato não encontrado");
             return;
@@ -52,32 +61,23 @@ public class Agenda {
     }
 
     public Contato buscarPorNome(String nome) {
-        for (int i = 0; i < tamanho; i++) {//for que percorre o tamanho da agenda,
-            if (contatos[i].getNome().equals(nome)) {// se a posição da agenda tiver um contato com nome igual
-                return contatos[i];//retorna o contato dessa posição
-            }
+        int indice = indiceDeNome(nome);
+        if (indice == -1) {
+            return null;
         }
-        return null;
+        return contatos[indice];
     }
 
     public Contato buscarPorTelefone(String telefone) {
-        for (int i = 0; i < tamanho; i++) {
-            if (contatos[i].getTelefone().equals(telefone)) {
-                return contatos[i];
-            }
+        int indice = indiceDeTelefone(telefone);
+        if (indice == -1) {
+            return null;
         }
-        return null;
+        return contatos[indice];
     }
 
     public void atualizarContato(String nome, String novoTelefone, String novoEmail) {
-        int indice = -1;
-        for (int i = 0; i < tamanho; i++) {
-            if (contatos[i].getNome().equals(nome)) {
-                indice = i;
-
-                break;
-            }
-        }
+        int indice = indiceDeNome(nome);
         if (indice == -1) {
             System.out.println("Contato não encontrado");
             return;

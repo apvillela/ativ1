@@ -114,9 +114,10 @@ public class Agenda {
         }
         System.out.println("]");
     }
-    public void inserirEmLote(Contato[] novos){
-        for (Contato contato : novos){
-            if(contato!= null)
+
+    public void inserirEmLote(Contato[] novos) {
+        for (Contato contato : novos) {
+            if (contato != null)
                 adicionarContato(contato);
         }
     }

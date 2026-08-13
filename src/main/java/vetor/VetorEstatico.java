@@ -49,6 +49,7 @@ public class VetorEstatico {
             tamanho--;
         }
     }
+
     public void remover(int indice) {
         if (tamanho == 0) {
             System.out.println("Vetor vazio");

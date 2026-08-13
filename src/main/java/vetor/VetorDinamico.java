@@ -26,5 +26,37 @@ public class VetorDinamico {
         tamanho++;
     }
 
+    private void reduzir() {
+        if (tamanho <= elementos.length/4) {
+            String[] novo = new String[elementos.length/2];
+            for (int i = 0; i < tamanho; i++) {
+                novo[i] = elementos[i];
+            }
+            elementos = novo;
+        }
+    }
 
+    public void remover(int indice) {
+        if (indice < 0 || indice >= tamanho) {
+            System.out.println("Indice Inválido");
+            return;
+        }
+        for (int i = indice; i < tamanho; i++) {
+            elementos[i] = elementos[i+1];
+        }
+        elementos[tamanho-1] = null;
+        tamanho--;
+        reduzir();
+    }
+
+    public void imprimir() {
+        System.out.print("[");
+        for (int i = 0; i < elementos.length ; i++) {
+            System.out.print(elementos[i]);
+            if (i < elementos.length -1) {
+                System.out.print(", ");
+            }
+        }
+        System.out.println("]");
+    }
 }

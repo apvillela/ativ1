@@ -1,15 +1,13 @@
 package ads.esd;
 
 public class Gerente {
+
     private String nome;
-    private double salario_base;
+    private double salarioBase;
+    private int projetosFinalizados;
 
-    private double salario_final;
-    private int projeto_finalizados;
-
-    public double calcula_salario_final() {
-        double salario_final_calculado = salario_base * (projeto_finalizados * 0.10);
-        return salario_final_calculado;
+    public double calcularSalarioFinal() {
+        return salarioBase * (projetosFinalizados * 0.10);
     }
 
     public String getNome() {
@@ -20,19 +18,24 @@ public class Gerente {
         this.nome = nome;
     }
 
-    public double getSalario_base() {
-        return salario_base;
+    public double getSalarioBase() {
+        return salarioBase;
     }
 
-    public void setSalario_base(double salario_base) {
-        this.salario_base = salario_base;
+    public void setSalarioBase(double salarioBase) {
+        this.salarioBase = salarioBase;
     }
 
-    public double getSalario_final() {
-        return salario_final;
+    public int getProjetosFinalizados() {
+        return projetosFinalizados;
     }
 
-    public void setSalario_final(double salario_final) {
-        this.salario_final = salario_final;
+    public void setProjetosFinalizados(int projetosFinalizados) {
+        this.projetosFinalizados = projetosFinalizados;
+    }
+
+    @Override
+    public String toString() {
+        return "Gerente{ nome=" + nome + ", salarioBase=" + salarioBase + ", projetosFinalizados=" + projetosFinalizados + " }";
     }
 }

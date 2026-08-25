@@ -8,55 +8,73 @@ public class ProjetoInterno {
     private List<Funcionario> funcionarios;
     private String nome;
     private Gerente gerente;
-    private boolean is_finalizado;
+    private boolean finalizado;
 
-    public void add_funcionario(Funcionario funcionario) {
+    public ProjetoInterno(String nome, Gerente gerente) {
+        this.nome = nome;
+        this.gerente = gerente;
+        this.funcionarios = new ArrayList<>();
+        this.finalizado = false;
+    }
+
+    public void adicionarFuncionario(Funcionario funcionario) {
+        if (funcionario == null) {
+            System.out.println("Funcionário inválido");
+            return;
+        }
         funcionarios.add(funcionario);
     }
 
-    public double get_salarios_bruto() {
-        double custo_salarios_funcionarios_final = 0;
-        for (int i = 0; i < funcionarios.size(); i++) {
-            custo_salarios_funcionarios_final += funcionarios.get(i).getSalario_base();
-        }
-        double salario_gerente = gerente.getSalario_base() * (funcionarios.size() * 1.01);
-
-        return salario_gerente + custo_salarios_funcionarios_final;
+    public void finalizarProjeto() {
+        finalizado = true;
     }
 
-    public double getCusto() {
-        if (is_finalizado) {// extrair pra um método getsalariostotalbonus
-
-            return get_salarios_bruto();
-        } else {
-            return get_salarios_bruto() * 1.1;
+    public double calcularSalarioBruto() {
+        double custoFuncionarios = 0;
+        for (Funcionario funcionario : funcionarios) {
+            custoFuncionarios += funcionario.getSalarioBase();
         }
+        double salarioGerente = gerente.getSalarioBase() * (funcionarios.size() * 1.01);
+        return salarioGerente + custoFuncionarios;
     }
 
-    public ProjetoInterno(String nome, Gerente gerente) {
-        is_finalizado = false;
-        this.gerente = gerente;
+    public double calcularCusto() {
+        if (finalizado) {
+            return calcularSalarioBruto();
+        }
+        return calcularSalarioBruto() * 1.1;
+    }
+
+    public boolean isFinalizado() {
+        return finalizado;
+    }
+
+    public String getNome() {
+        return nome;
+    }
+
+    public void setNome(String nome) {
         this.nome = nome;
-        this.funcionarios = new ArrayList<>();
     }
 
-    public void finaliza_projeto() {
-        is_finalizado = true;
+    public Gerente getGerente() {
+        return gerente;
     }
 
-    @Override
-    public String toString() {
-        return "Projeto{ " + nome +
-                " funcionarios=" + funcionarios.toString() +
-                ", gerente=" + gerente.getNome() + "custo " + getCusto() +
-                '}';
+    public void setGerente(Gerente gerente) {
+        this.gerente = gerente;
     }
 
     public List<Funcionario> getFuncionarios() {
         return funcionarios;
     }
 
-    public void setFuncionarios(ArrayList<Funcionario> funcionarios) {
+    public void setFuncionarios(List<Funcionario> funcionarios) {
         this.funcionarios = funcionarios;
+    }
+
+    @Override
+    public String toString() {
+        return "Projeto{ nome=" + nome + ", gerente=" + gerente.getNome() + ", funcionarios=" + funcionarios + ", custo=" + calcularCusto() + " }";
     }
 }

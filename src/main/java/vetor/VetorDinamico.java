@@ -3,19 +3,11 @@ package vetor;
 public class VetorDinamico {
 
     private String[] elementos;
-    int tamanho;
+    private int tamanho;
 
     public VetorDinamico(int quantidade) {
         elementos = new String[quantidade];
-        tamanho = 0;
-    }
-
-    private void expandir() {
-        String[] novo = new String[elementos.length * 2];
-        for (int i = 0; i < elementos.length; i++) {
-            novo[i] = elementos[i];
-        }
-        elementos = novo;
+        this.tamanho = 0;
     }
 
     public void inserir(String elemento) {
@@ -26,34 +18,47 @@ public class VetorDinamico {
         tamanho++;
     }
 
-    private void reduzir() {
-        if (tamanho <= elementos.length/4) {
-            String[] novo = new String[elementos.length/2];
-            for (int i = 0; i < tamanho; i++) {
-                novo[i] = elementos[i];
-            }
-            elementos = novo;
-        }
-    }
-
     public void remover(int indice) {
         if (indice < 0 || indice >= tamanho) {
-            System.out.println("Indice Inválido");
+            System.out.println("Índice inválido");
             return;
         }
-        for (int i = indice; i < tamanho; i++) {
-            elementos[i] = elementos[i+1];
+        for (int i = indice; i < tamanho - 1; i++) {
+            elementos[i] = elementos[i + 1];
         }
-        elementos[tamanho-1] = null;
+        elementos[tamanho - 1] = null;
         tamanho--;
         reduzir();
     }
 
+    public int obterTamanho() {
+        return tamanho;
+    }
+
+    private void expandir() {
+        String[] novo = new String[Math.max(1, elementos.length * 2)];
+        for (int i = 0; i < tamanho; i++) {
+            novo[i] = elementos[i];
+        }
+        elementos = novo;
+    }
+
+    private void reduzir() {
+        if (tamanho > elementos.length / 4) {
+            return;
+        }
+        String[] novo = new String[elementos.length / 2];
+        for (int i = 0; i < tamanho; i++) {
+            novo[i] = elementos[i];
+        }
+        elementos = novo;
+    }
+
     public void imprimir() {
         System.out.print("[");
-        for (int i = 0; i < elementos.length ; i++) {
+        for (int i = 0; i < tamanho; i++) {
             System.out.print(elementos[i]);
-            if (i < elementos.length -1) {
+            if (i < tamanho - 1) {
                 System.out.print(", ");
             }
         }

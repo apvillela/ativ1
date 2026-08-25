@@ -2,11 +2,10 @@ package vetor.teste;
 
 import vetor.VetorEstatico;
 
-public class ex1 {
+public class Ex1 {
 
-    static void main(){
-        VetorEstatico vetorEstatico =
-                new VetorEstatico(3);
+    static void main() {
+        VetorEstatico vetorEstatico = new VetorEstatico(3);
 
         vetorEstatico.inserir("A");
         vetorEstatico.inserir("B");

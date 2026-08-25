@@ -1,36 +1,33 @@
 package ads.esd;
 
 public class Funcionario {
-    private String name;
-    private Integer salario_base;
 
-    public Funcionario(String name, Integer salario_base) {
-        this.salario_base = salario_base;
-        this.name = name;
+    private String nome;
+    private double salarioBase;
+
+    public Funcionario(String nome, double salarioBase) {
+        this.nome = nome;
+        this.salarioBase = salarioBase;
+    }
+
+    public String getNome() {
+        return nome;
+    }
+
+    public void setNome(String nome) {
+        this.nome = nome;
+    }
+
+    public double getSalarioBase() {
+        return salarioBase;
+    }
+
+    public void setSalarioBase(double salarioBase) {
+        this.salarioBase = salarioBase;
     }
 
     @Override
     public String toString() {
-        return "Funcionario{" +
-                "name='" + name + '\'' +
-                ", salario_base=" + salario_base +
-                '}';
+        return "Funcionario{ nome=" + nome + ", salarioBase=" + salarioBase + " }";
     }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public Integer getSalario_base() {
-        return salario_base;
-    }
-
-    public void setSalario_base(Integer salario_base) {
-        this.salario_base = salario_base;
-    }
-
 }

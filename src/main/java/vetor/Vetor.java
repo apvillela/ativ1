@@ -71,6 +71,13 @@ public class Vetor<T extends Comparable<T>> {
         reduzir();
     }
 
+    public T obter(int indice) {
+        if (indice < 0 || indice >= tamanho) {
+            return null;
+        }
+        return elementos[indice];
+    }
+
     public int obterTamanho() {
         return tamanho;
     }

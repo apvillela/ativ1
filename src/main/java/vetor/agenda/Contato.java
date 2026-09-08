@@ -2,7 +2,7 @@ package vetor.agenda;
 
 import java.util.Objects;
 
-class Contato {
+public class Contato implements Comparable<Contato> {
     private String nome;
     private String telefone;
     private String email; // opcional
@@ -17,6 +17,11 @@ class Contato {
         this.nome = nome;
         this.telefone = telefone;
 
+    }
+
+    @Override
+    public int compareTo(Contato outro) {
+        return nome.compareToIgnoreCase(outro.nome);
     }
 
     @Override

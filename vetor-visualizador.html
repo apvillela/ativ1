@@ -1,0 +1,870 @@
+<title>VetorEstatico — execução passo a passo</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+
+  :root {
+    --board:      #0C2723;
+    --panel:      #113029;
+    --panel-2:    #0E2A25;
+    --trace:      #24544A;
+    --trace-soft: #1A423A;
+    --silk:       #E9E3D2;
+    --silk-dim:   #8CA69D;
+    --silk-faint: #5B7B73;
+    --copper:     #C57F4B;
+    --copper-hot: #F2A45E;
+    --flux:       #7FD3C1;
+    --fault:      #E2604F;
+    --live-bg:    rgba(242,164,94,.10);
+
+    --mono: "JetBrainsMono Nerd Font", "JetBrains Mono", "IBM Plex Mono", "Fira Code", ui-monospace, monospace;
+    --gothic: "URW Gothic", "Century Gothic", "Questrial", "Avant Garde", var(--mono);
+    --narrow: "Nimbus Sans Narrow", "Liberation Sans Narrow", var(--gothic);
+  }
+
+  /* Placa clara: mesma paleta, invertida para papel de esquemático. */
+  @media (prefers-color-scheme: light) {
+    :root {
+      --board:      #E3E2D6;
+      --panel:      #EFEEE4;
+      --panel-2:    #E8E7DB;
+      --trace:      #BDBFAE;
+      --trace-soft: #D2D3C4;
+      --silk:       #16332C;
+      --silk-dim:   #55736A;
+      --silk-faint: #93A79E;
+      --copper:     #A55C26;
+      --copper-hot: #8A4715;
+      --flux:       #167D67;
+      --fault:      #B8382A;
+      --live-bg:    rgba(165,92,38,.10);
+    }
+  }
+  :root[data-theme="light"] {
+    --board:      #E3E2D6;
+    --panel:      #EFEEE4;
+    --panel-2:    #E8E7DB;
+    --trace:      #BDBFAE;
+    --trace-soft: #D2D3C4;
+    --silk:       #16332C;
+    --silk-dim:   #55736A;
+    --silk-faint: #93A79E;
+    --copper:     #A55C26;
+    --copper-hot: #8A4715;
+    --flux:       #167D67;
+    --fault:      #B8382A;
+    --live-bg:    rgba(165,92,38,.10);
+  }
+  :root[data-theme="dark"] {
+    --board:      #0C2723;
+    --panel:      #113029;
+    --panel-2:    #0E2A25;
+    --trace:      #24544A;
+    --trace-soft: #1A423A;
+    --silk:       #E9E3D2;
+    --silk-dim:   #8CA69D;
+    --silk-faint: #5B7B73;
+    --copper:     #C57F4B;
+    --copper-hot: #F2A45E;
+    --flux:       #7FD3C1;
+    --fault:      #E2604F;
+    --live-bg:    rgba(242,164,94,.10);
+  }
+
+  body {
+    background: var(--board);
+    color: var(--silk);
+    font-family: var(--mono);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .board {
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 22px 20px 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  /* ---- cabeçalho ---- */
+  .top { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .title {
+    font-family: var(--gothic);
+    font-size: clamp(24px, 4.4vw, 38px);
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    line-height: 1;
+    margin: 0;
+    text-wrap: balance;
+  }
+  .title em { font-style: normal; color: var(--copper); }
+  .path { color: var(--silk-faint); font-size: 12px; margin-top: 8px; letter-spacing: .02em; }
+
+  .eyebrow {
+    font-family: var(--gothic);
+    font-size: 11px;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: var(--silk-dim);
+  }
+
+  /* ---- painéis ---- */
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--trace);
+    position: relative;
+  }
+  .panel > header {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--trace);
+    background: var(--panel-2);
+    min-height: 42px;
+  }
+  .panel > .body { padding: 14px; }
+
+  .stage {
+    display: grid;
+    grid-template-columns: minmax(0, 1.08fr) minmax(0, 1fr);
+    gap: 16px;
+    position: relative;
+  }
+  .rack { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+
+  /* ---- código ---- */
+  .src {
+    margin: 0; padding: 10px 0;
+    list-style: none;
+    counter-reset: none;
+    max-height: 62vh;
+    overflow: auto;
+    font-size: 13px;
+    line-height: 1.62;
+    scrollbar-width: thin;
+    scrollbar-color: var(--trace) transparent;
+  }
+  .src li { display: grid; grid-template-columns: 46px 1fr; align-items: baseline; white-space: pre; }
+  .src .n {
+    font-family: var(--narrow);
+    color: var(--silk-faint);
+    text-align: right;
+    padding-right: 12px;
+    font-variant-numeric: tabular-nums;
+    position: relative;
+  }
+  .src .t { padding-right: 14px; overflow: visible; }
+  .src li.on { background: var(--live-bg); }
+  .src li.on .n { color: var(--copper-hot); }
+  .src li.on .n::after {
+    content: ""; position: absolute; right: 4px; top: 50%;
+    width: 5px; height: 5px; margin-top: -2.5px; border-radius: 50%;
+    background: var(--copper-hot);
+    box-shadow: 0 0 0 3px var(--live-bg);
+  }
+  .src li.fault { background: color-mix(in srgb, var(--fault) 14%, transparent); }
+  .src li.fault .n { color: var(--fault); }
+  .src li.dead .t { opacity: .34; }
+
+  .k  { color: var(--copper); }
+  .s  { color: var(--flux); }
+  .num{ color: var(--flux); }
+  .cm { color: var(--silk-faint); font-style: italic; }
+
+  /* ---- transporte ---- */
+  .seg { display: inline-flex; border: 1px solid var(--trace); }
+  .seg button {
+    font: inherit; font-family: var(--gothic); font-size: 11px; letter-spacing: .16em; text-transform: uppercase;
+    background: transparent; color: var(--silk-dim); border: 0; padding: 5px 11px; cursor: pointer;
+  }
+  .seg button[aria-pressed="true"] { background: var(--copper); color: var(--panel); }
+
+  .step-btn {
+    font: inherit; font-family: var(--gothic); font-size: 11px; letter-spacing: .16em; text-transform: uppercase;
+    background: transparent; border: 1px solid var(--copper); color: var(--copper);
+    padding: 5px 12px; cursor: pointer;
+  }
+  .step-btn:hover:not(:disabled) { background: var(--copper); color: var(--panel); }
+  .step-btn:disabled { opacity: .3; cursor: default; }
+
+  .counter { font-family: var(--narrow); font-size: 12px; color: var(--silk-faint); font-variant-numeric: tabular-nums; margin-left: auto; }
+
+  .callchip {
+    font-size: 12px; color: var(--copper-hot);
+    border: 1px dashed var(--trace); padding: 2px 8px;
+    max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .callchip.idle { color: var(--silk-faint); border-style: dotted; }
+
+  /* ---- memória: assinatura da página ---- */
+  .memwrap { position: relative; }
+  .track { position: relative; height: 34px; }
+  .span-bar {
+    position: absolute; bottom: 6px; height: 2px; left: 0; width: 0;
+    background: var(--copper);
+    transition: width .28s cubic-bezier(.4,0,.2,1);
+  }
+  .caret {
+    position: absolute; bottom: 0; width: 0; height: 0;
+    border-left: 5px solid transparent; border-right: 5px solid transparent;
+    border-top: 7px solid var(--copper-hot);
+    transform: translateX(-50%);
+    transition: left .28s cubic-bezier(.4,0,.2,1);
+  }
+  .caret-tag {
+    position: absolute; top: 0;
+    font-family: var(--narrow); font-size: 12px; color: var(--copper-hot);
+    white-space: nowrap; transform: translateX(-50%);
+    transition: left .28s cubic-bezier(.4,0,.2,1);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .cells { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .cell {
+    border: 1px solid var(--trace);
+    background: var(--panel-2);
+    min-height: 62px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 17px;
+    position: relative;
+    transition: border-color .2s, background .2s, transform .2s;
+  }
+  .cell .val { max-width: 100%; overflow: hidden; text-overflow: ellipsis; padding: 0 8px; }
+  .cell.null .val { color: var(--silk-faint); font-size: 14px; }
+  .cell.live { border-color: var(--copper-hot); background: var(--live-bg); }
+  .cell.read { border-color: var(--flux); }
+  .cell.hole { border-style: dashed; border-color: var(--copper); }
+  .cell .tag {
+    position: absolute; top: -1px; right: -1px;
+    font-family: var(--narrow); font-size: 10px; letter-spacing: .1em; text-transform: uppercase;
+    background: var(--copper); color: var(--panel); padding: 1px 5px;
+  }
+  .ruler { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 6px; }
+  .ruler span {
+    text-align: center; font-family: var(--narrow); font-size: 12px;
+    color: var(--silk-faint); font-variant-numeric: tabular-nums;
+  }
+  .memnote { margin-top: 12px; font-size: 12px; color: var(--silk-dim); border-top: 1px solid var(--trace-soft); padding-top: 10px; }
+  .memnote b { color: var(--copper); font-weight: 400; }
+
+  /* ---- variáveis ---- */
+  .vars { display: flex; flex-wrap: wrap; gap: 8px; }
+  .var {
+    border: 1px solid var(--trace-soft); padding: 5px 10px; font-size: 13px;
+    display: flex; gap: 8px; align-items: baseline;
+  }
+  .var .vn { color: var(--silk-dim); }
+  .var .vv { color: var(--silk); font-variant-numeric: tabular-nums; }
+  .var.ret { border-color: var(--flux); }
+  .var.ret .vv { color: var(--flux); }
+  .var.empty { color: var(--silk-faint); }
+
+  /* ---- saída ---- */
+  .console {
+    margin: 0; font-size: 13px; line-height: 1.6;
+    min-height: 96px; max-height: 190px; overflow: auto;
+    white-space: pre-wrap; word-break: break-word;
+    color: var(--silk);
+    scrollbar-width: thin; scrollbar-color: var(--trace) transparent;
+  }
+  .console:empty::before { content: "sem saída ainda"; color: var(--silk-faint); }
+  .cursor { display: inline-block; width: 7px; height: 1em; background: var(--copper-hot); vertical-align: -2px; }
+  .faultline { color: var(--fault); display: block; margin-top: 6px; }
+
+  /* ---- chamadas ---- */
+  .calls { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; }
+  .call {
+    border: 1px solid var(--trace); background: var(--panel-2);
+    display: flex; align-items: center; gap: 8px; padding: 9px 10px;
+    font-size: 13px; flex-wrap: wrap;
+  }
+  .call .sig { color: var(--silk-dim); }
+  .call input {
+    font: inherit; font-family: var(--mono); font-size: 13px;
+    background: var(--board); color: var(--silk);
+    border: 1px solid var(--trace); padding: 3px 7px; width: 62px; min-width: 0;
+  }
+  .call input.idx { width: 42px; text-align: center; font-variant-numeric: tabular-nums; }
+  .call input:focus-visible, .step-btn:focus-visible, .seg button:focus-visible, .run:focus-visible, .ghost:focus-visible {
+    outline: 2px solid var(--copper-hot); outline-offset: 2px;
+  }
+  .run {
+    margin-left: auto; font: inherit; font-family: var(--gothic); font-size: 11px;
+    letter-spacing: .14em; text-transform: uppercase;
+    background: transparent; border: 1px solid var(--copper); color: var(--copper);
+    padding: 4px 10px; cursor: pointer;
+  }
+  .run:hover:not(:disabled) { background: var(--copper); color: var(--panel); }
+  .calls[data-busy="true"] { opacity: .42; pointer-events: none; }
+
+  .ghost {
+    font: inherit; font-family: var(--gothic); font-size: 11px; letter-spacing: .16em; text-transform: uppercase;
+    background: transparent; border: 1px solid var(--trace); color: var(--silk-dim);
+    padding: 6px 12px; cursor: pointer;
+  }
+  .ghost:hover { border-color: var(--copper); color: var(--copper); }
+
+  /* ---- trilha de cobre viva ---- */
+  #wire { position: absolute; inset: 0; pointer-events: none; overflow: visible; }
+  #wire path { fill: none; stroke: var(--copper-hot); stroke-width: 1.5; stroke-linecap: square; }
+  #wire circle { fill: var(--copper-hot); }
+  #wire.on path { animation: flow .9s linear infinite; }
+  @keyframes flow { to { stroke-dashoffset: -14; } }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+  @media (max-width: 880px) {
+    .stage { grid-template-columns: 1fr; }
+    .src { max-height: 44vh; }
+    #wire { display: none; }
+    .counter { margin-left: 0; }
+  }
+</style>
+
+<div class="board">
+  <div class="top">
+    <div>
+      <h1 class="title">Vetor <em>Estático</em></h1>
+      <div class="path">src/main/java/vetor/VetorEstatico.java · capacidade 3</div>
+    </div>
+    <button class="ghost" id="reset">new VetorEstatico(3)</button>
+  </div>
+
+  <div class="stage" id="stage">
+    <svg id="wire" aria-hidden="true"></svg>
+
+    <section class="panel">
+      <header>
+        <span class="eyebrow">Código</span>
+        <span class="callchip idle" id="callchip">nenhuma chamada</span>
+        <span class="counter" id="counter"></span>
+      </header>
+      <ol class="src" id="src"></ol>
+      <header style="border-bottom:0; border-top:1px solid var(--trace);">
+        <div class="seg" role="group" aria-label="Modo de execução">
+          <button id="mode-step" aria-pressed="true">passo</button>
+          <button id="mode-auto" aria-pressed="false">auto</button>
+        </div>
+        <button class="step-btn" id="next" disabled>próximo →</button>
+        <span class="counter" id="note"></span>
+      </header>
+    </section>
+
+    <div class="rack">
+      <section class="panel">
+        <header><span class="eyebrow">Memória</span></header>
+        <div class="body memwrap">
+          <div class="track" id="track">
+            <div class="span-bar" id="spanbar"></div>
+            <div class="caret" id="caret"></div>
+            <div class="caret-tag" id="carettag">tamanho = 0</div>
+          </div>
+          <div class="cells" id="cells"></div>
+          <div class="ruler"><span>0</span><span>1</span><span>2</span></div>
+          <p class="memnote"><b>tamanho</b> é contagem, não índice: a seta marca a próxima posição livre. O último elemento fica sempre em <b>tamanho - 1</b>.</p>
+        </div>
+      </section>
+
+      <section class="panel">
+        <header><span class="eyebrow">Variáveis</span></header>
+        <div class="body"><div class="vars" id="vars"></div></div>
+      </section>
+
+      <section class="panel">
+        <header><span class="eyebrow">Saída · System.out</span></header>
+        <div class="body"><pre class="console" id="console" aria-live="polite"></pre></div>
+      </section>
+    </div>
+  </div>
+
+  <section class="panel">
+    <header><span class="eyebrow">Chamadas</span></header>
+    <div class="body">
+      <div class="calls" id="calls">
+        <div class="call">
+          <span class="sig">inserir(</span><input id="v1" value="a" maxlength="6" aria-label="elemento"><span class="sig">)</span>
+          <button class="run" data-op="ins1">rodar</button>
+        </div>
+        <div class="call">
+          <span class="sig">inserir(</span><input class="idx" id="i2" value="0" maxlength="2" aria-label="índice"><span class="sig">,</span><input id="v2" value="x" maxlength="6" aria-label="elemento"><span class="sig">)</span>
+          <button class="run" data-op="ins2">rodar</button>
+        </div>
+        <div class="call">
+          <span class="sig">removerNoFinal()</span>
+          <button class="run" data-op="rem">rodar</button>
+        </div>
+        <div class="call">
+          <span class="sig">obterTamanho()</span>
+          <button class="run" data-op="tam">rodar</button>
+        </div>
+        <div class="call">
+          <span class="sig">imprimir()</span>
+          <button class="run" data-op="imp">rodar</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+(() => {
+  const N = 3;
+
+  const SRC = [
+    'package vetor;',
+    '',
+    'public class VetorEstatico {',
+    '',
+    '    private String[] elementos;',
+    '    private int tamanho;',
+    '',
+    '    public VetorEstatico(int quantidade) {',
+    '        elementos = new String[quantidade];',
+    '        this.tamanho = 0;',
+    '',
+    '    }',
+    '',
+    '    public void inserir(String elemento) {',
+    '        if (tamanho < elementos.length) {',
+    '            elementos[tamanho] = elemento;',
+    '            tamanho++;',
+    '        } else {',
+    '            System.out.println("Vetor cheio");',
+    '        }',
+    '    }',
+    '',
+    '    public void inserir(int indice, String elemento) {',
+    '        if (tamanho >= elementos.length) {',
+    '            System.out.println("Vetor cheio");',
+    '            return;',
+    '        }',
+    '        if (indice < 0 || indice > elementos.length) {',
+    '            System.out.println("posição inválida");',
+    '            return;',
+    '        }',
+    '        for (int i = tamanho; i > indice; i--) {',
+    '            elementos[i] = elementos[i - 1];',
+    '        }',
+    '        elementos[indice] = elemento;',
+    '        tamanho++;',
+    '',
+    '    }',
+    '',
+    '    public int obterTamanho() {',
+    '        return tamanho;',
+    '    }',
+    '',
+    '    public void removerNoFinal() {',
+    '        if (tamanho == 0) {',
+    '            System.out.println("Vetor vazio");',
+    '        } else {',
+    '            elementos[tamanho - 1] = null;',
+    '            tamanho--;',
+    '        }',
+    '    }',
+    '    //public void inserir(String elemento) {',
+    '    //    for (int i = 0; i < elementos.length; i++) {',
+    '    //      if (elementos[i] == null){',
+    '    //        elementos[i] = elemento;',
+    '    //      return;',
+    '    //}',
+    '',
+    '    // }',
+    '',
+    '    //}',
+    '    public void imprimir() {',
+    '        System.out.print("[");',
+    '        for (int i = 0; i < elementos.length; i++) {',
+    '            System.out.print(elementos[i]);',
+    '            if (i < elementos.length - 1) {',
+    '                System.out.print(", ");',
+    '            }',
+    '        }',
+    '        System.out.println("]");',
+    '',
+    '    }',
+    '',
+    '}'
+  ];
+
+  // ---------- render do código ----------
+  const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const KW = /^(package|public|private|class|void|int|new|this|if|else|for|return|null|String)$/;
+  const TOK = /(\/\/.*$)|("(?:[^"\\]|\\.)*")|\b(\d+)\b|\b([A-Za-z_]\w*)\b/g;
+
+  function highlight(line) {
+    let out = '', last = 0, m;
+    TOK.lastIndex = 0;
+    while ((m = TOK.exec(line)) !== null) {
+      out += esc(line.slice(last, m.index));
+      if (m[1]) out += '<span class="cm">' + esc(m[1]) + '</span>';
+      else if (m[2]) out += '<span class="s">' + esc(m[2]) + '</span>';
+      else if (m[3]) out += '<span class="num">' + m[3] + '</span>';
+      else if (m[4] && KW.test(m[4])) out += '<span class="k">' + m[4] + '</span>';
+      else out += esc(m[0]);
+      last = m.index + m[0].length;
+    }
+    return out + esc(line.slice(last));
+  }
+
+  const srcEl = document.getElementById('src');
+  const lineEls = [];
+  SRC.forEach((line, i) => {
+    const li = document.createElement('li');
+    li.innerHTML = '<span class="n">' + (i + 1) + '</span><span class="t">' + (highlight(line) || ' ') + '</span>';
+    if (/^\s*\/\//.test(line)) li.classList.add('dead');
+    srcEl.appendChild(li);
+    lineEls.push(li);
+  });
+
+  // ---------- estado + tracer ----------
+  const clone = s => JSON.parse(JSON.stringify(s));
+  const q = v => '"' + v + '"';
+  const fresh = () => ({ cells: [null, null, null], tamanho: 0, out: '', ret: null, vars: {}, fault: null });
+
+  let state = fresh();
+  let frames = [], fi = -1, playing = null, mode = 'step';
+
+  function tracer(base) {
+    const s = clone(base);
+    s.ret = null; s.vars = {}; s.fault = null;
+    const frames = [];
+    const at = (line, note, touch) => frames.push({ line, note: note || '', touch: touch || null, state: clone(s) });
+    return { s, frames, at };
+  }
+
+  function traceIns1(base, el) {
+    const { s, frames, at } = tracer(base);
+    s.vars = { elemento: q(el) };
+    at(14, 'chamada inserir(' + q(el) + ')');
+    const cond = s.tamanho < N;
+    at(15, 'tamanho(' + s.tamanho + ') < elementos.length(' + N + ') → ' + cond);
+    if (cond) {
+      const i = s.tamanho;
+      s.cells[i] = el;
+      at(16, 'elementos[' + i + '] = ' + q(el) + '  (tamanho é a 1ª posição livre)', { idx: i, kind: 'write' });
+      s.tamanho++;
+      at(17, 'tamanho: ' + (s.tamanho - 1) + ' → ' + s.tamanho);
+    } else {
+      s.out += 'Vetor cheio\n';
+      at(19, 'imprime "Vetor cheio"');
+    }
+    at(21, 'fim do método');
+    return frames;
+  }
+
+  function traceIns2(base, idx, el) {
+    const { s, frames, at } = tracer(base);
+    s.vars = { indice: idx, elemento: q(el) };
+    at(23, 'chamada inserir(' + idx + ', ' + q(el) + ')');
+
+    const cheio = s.tamanho >= N;
+    at(24, 'tamanho(' + s.tamanho + ') >= elementos.length(' + N + ') → ' + cheio);
+    if (cheio) {
+      s.out += 'Vetor cheio\n';
+      at(25, 'imprime "Vetor cheio"');
+      at(26, 'return — sai do método');
+      return frames;
+    }
+
+    const inval = idx < 0 || idx > N;
+    at(28, idx + ' < 0 → ' + (idx < 0) + '   ||   ' + idx + ' > elementos.length(' + N + ') → ' + (idx > N));
+    if (inval) {
+      s.out += 'posição inválida\n';
+      at(29, 'imprime "posição inválida"');
+      at(30, 'return — sai do método');
+      return frames;
+    }
+
+    let i = s.tamanho;
+    s.vars.i = i;
+    at(32, 'i = ' + i + '; ' + i + ' > indice(' + idx + ') → ' + (i > idx));
+    while (i > idx) {
+      s.cells[i] = s.cells[i - 1];
+      at(33, 'elementos[' + i + '] = elementos[' + (i - 1) + ']  (empurra para a direita)', { idx: i, kind: 'write' });
+      i--; s.vars.i = i;
+      at(32, 'i = ' + i + '; ' + i + ' > indice(' + idx + ') → ' + (i > idx));
+    }
+
+    if (idx >= N) {
+      s.fault = 'ArrayIndexOutOfBoundsException: Index ' + idx + ' out of bounds for length ' + N;
+      at(35, 'elementos[' + idx + '] não existe — índice máximo é ' + (N - 1));
+      return frames;
+    }
+    s.cells[idx] = el;
+    at(35, 'elementos[' + idx + '] = ' + q(el), { idx: idx, kind: 'write' });
+    s.tamanho++;
+    at(36, 'tamanho: ' + (s.tamanho - 1) + ' → ' + s.tamanho);
+    at(38, 'fim do método');
+    return frames;
+  }
+
+  function traceTam(base) {
+    const { s, frames, at } = tracer(base);
+    at(40, 'chamada obterTamanho()');
+    s.ret = s.tamanho;
+    at(41, 'devolve ' + s.tamanho);
+    at(42, 'fim do método');
+    return frames;
+  }
+
+  function traceRem(base) {
+    const { s, frames, at } = tracer(base);
+    at(44, 'chamada removerNoFinal()');
+    const vazio = s.tamanho === 0;
+    at(45, 'tamanho(' + s.tamanho + ') == 0 → ' + vazio);
+    if (vazio) {
+      s.out += 'Vetor vazio\n';
+      at(46, 'imprime "Vetor vazio"');
+    } else {
+      const i = s.tamanho - 1;
+      s.cells[i] = null;
+      at(48, 'elementos[' + i + '] = null  (último ocupado é tamanho - 1)', { idx: i, kind: 'write' });
+      s.tamanho--;
+      at(49, 'tamanho: ' + (s.tamanho + 1) + ' → ' + s.tamanho);
+    }
+    at(51, 'fim do método');
+    return frames;
+  }
+
+  function traceImp(base) {
+    const { s, frames, at } = tracer(base);
+    at(62, 'chamada imprimir()');
+    s.out += '[';
+    at(63, 'imprime "["');
+    let i = 0; s.vars.i = 0;
+    at(64, 'i = 0; 0 < elementos.length(' + N + ') → true');
+    while (i < N) {
+      s.out += String(s.cells[i]);
+      at(65, 'imprime elementos[' + i + '] → ' + String(s.cells[i]), { idx: i, kind: 'read' });
+      const virg = i < N - 1;
+      at(66, i + ' < elementos.length - 1 (' + (N - 1) + ') → ' + virg);
+      if (virg) { s.out += ', '; at(67, 'imprime ", "'); }
+      i++; s.vars.i = i;
+      at(64, 'i = ' + i + '; ' + i + ' < ' + N + ' → ' + (i < N));
+    }
+    s.out += ']\n';
+    at(70, 'imprime "]" e quebra a linha');
+    at(72, 'fim do método');
+    return frames;
+  }
+
+  // ---------- pintura ----------
+  const cellsEl = document.getElementById('cells');
+  const cellEls = [];
+  for (let i = 0; i < N; i++) {
+    const d = document.createElement('div');
+    d.className = 'cell';
+    d.innerHTML = '<span class="val"></span>';
+    cellsEl.appendChild(d);
+    cellEls.push(d);
+  }
+
+  const varsEl = document.getElementById('vars');
+  const consoleEl = document.getElementById('console');
+  const spanbar = document.getElementById('spanbar');
+  const caret = document.getElementById('caret');
+  const carettag = document.getElementById('carettag');
+  const track = document.getElementById('track');
+  const counter = document.getElementById('counter');
+  const noteEl = document.getElementById('note');
+  const callchip = document.getElementById('callchip');
+  const nextBtn = document.getElementById('next');
+  const callsEl = document.getElementById('calls');
+  const wire = document.getElementById('wire');
+  const stage = document.getElementById('stage');
+
+  function boundaryX(k) {
+    const t = track.getBoundingClientRect();
+    if (k <= 0) return cellEls[0].getBoundingClientRect().left - t.left;
+    if (k >= N) return cellEls[N - 1].getBoundingClientRect().right - t.left;
+    return cellEls[k].getBoundingClientRect().left - t.left - 5;
+  }
+
+  function paint(frame) {
+    const s = frame ? frame.state : state;
+    const touch = frame ? frame.touch : null;
+
+    cellEls.forEach((el, i) => {
+      const v = s.cells[i];
+      el.querySelector('.val').textContent = v === null ? 'null' : '"' + v + '"';
+      el.classList.toggle('null', v === null);
+      const hole = v === null && i < s.tamanho;
+      el.classList.toggle('hole', hole);
+      el.classList.toggle('live', !!touch && touch.idx === i && touch.kind === 'write');
+      el.classList.toggle('read', !!touch && touch.idx === i && touch.kind === 'read');
+      const tag = el.querySelector('.tag');
+      if (hole && !tag) { const t = document.createElement('span'); t.className = 'tag'; t.textContent = 'buraco'; el.appendChild(t); }
+      if (!hole && tag) tag.remove();
+    });
+
+    const x = boundaryX(s.tamanho);
+    spanbar.style.width = Math.max(0, x - boundaryX(0)) + 'px';
+    caret.style.left = x + 'px';
+    carettag.style.left = Math.min(Math.max(x, 34), track.clientWidth - 34) + 'px';
+    carettag.textContent = 'tamanho = ' + s.tamanho;
+
+    varsEl.innerHTML = '';
+    const add = (n, v, cls) => {
+      const d = document.createElement('div');
+      d.className = 'var' + (cls ? ' ' + cls : '');
+      d.innerHTML = '<span class="vn">' + n + '</span><span class="vv">' + v + '</span>';
+      varsEl.appendChild(d);
+    };
+    add('tamanho', s.tamanho);
+    add('elementos.length', N);
+    Object.keys(s.vars).forEach(k => add(k, s.vars[k]));
+    if (s.ret !== null) add('retorno', s.ret, 'ret');
+
+    consoleEl.textContent = s.out;
+    if (frame && !s.fault) consoleEl.insertAdjacentHTML('beforeend', '<span class="cursor"></span>');
+    if (s.fault) consoleEl.insertAdjacentHTML('beforeend', '<span class="faultline">Exception in thread "main" java.lang.' + s.fault + '</span>');
+    consoleEl.scrollTop = consoleEl.scrollHeight;
+
+    lineEls.forEach(li => li.classList.remove('on', 'fault'));
+    if (frame) {
+      const li = lineEls[frame.line - 1];
+      li.classList.add(s.fault ? 'fault' : 'on');
+      const box = srcEl.getBoundingClientRect(), lr = li.getBoundingClientRect();
+      srcEl.scrollTo({
+        top: srcEl.scrollTop + (lr.top - box.top) - (box.height - lr.height) / 2,
+        behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
+      });
+      noteEl.textContent = frame.note;
+      counter.textContent = 'passo ' + (fi + 1) + '/' + frames.length;
+    } else {
+      noteEl.textContent = '';
+      counter.textContent = '';
+    }
+    drawWire(frame);
+  }
+
+  function drawWire(frame) {
+    wire.innerHTML = '';
+    wire.classList.remove('on');
+    if (!frame || !frame.touch || window.innerWidth <= 880) return;
+
+    const li = lineEls[frame.line - 1];
+    const box = srcEl.getBoundingClientRect();
+    const lr = li.getBoundingClientRect();
+    if (lr.bottom < box.top + 4 || lr.top > box.bottom - 4) return;
+
+    const st = stage.getBoundingClientRect();
+    const cr = cellEls[frame.touch.idx].getBoundingClientRect();
+    const x0 = lr.left + 46 - st.left, y0 = lr.top + lr.height / 2 - st.top;
+    const x1 = cr.left + cr.width / 2 - st.left, y1 = cr.top - st.top - 6;
+
+    const xa = box.right - st.left + 10;
+    const dy = y1 - 22 - y0;
+    const dx = Math.abs(dy);
+    let d;
+    if (xa + dx < x1 - 6) d = 'M' + x0 + ' ' + y0 + ' H' + xa + ' L' + (xa + dx) + ' ' + (y1 - 22) + ' H' + x1 + ' V' + y1;
+    else d = 'M' + x0 + ' ' + y0 + ' H' + xa + ' V' + (y1 - 12) + ' H' + x1 + ' V' + y1;
+
+    wire.innerHTML =
+      '<path d="' + d + '" stroke-dasharray="7 7"></path>' +
+      '<circle cx="' + x0 + '" cy="' + y0 + '" r="3"></circle>' +
+      '<circle cx="' + x1 + '" cy="' + y1 + '" r="3"></circle>';
+    wire.classList.add('on');
+  }
+
+  // ---------- transporte ----------
+  function start(newFrames, label) {
+    stop();
+    frames = newFrames; fi = -1;
+    callchip.textContent = label;
+    callchip.classList.remove('idle');
+    callsEl.dataset.busy = 'true';
+    advance();
+    if (mode === 'auto') playing = setInterval(advance, 620);
+    else nextBtn.disabled = false;
+  }
+
+  function advance() {
+    if (fi >= frames.length - 1) { finish(); return; }
+    fi++;
+    paint(frames[fi]);
+    if (fi === frames.length - 1) {
+      if (mode === 'auto') setTimeout(finish, 620);
+      else nextBtn.textContent = 'concluir ✓';
+    }
+  }
+
+  function finish() {
+    stop();
+    if (frames.length) state = clone(frames[frames.length - 1].state);
+    state.vars = {}; state.ret = null;
+    frames = []; fi = -1;
+    callchip.textContent = 'nenhuma chamada';
+    callchip.classList.add('idle');
+    callsEl.dataset.busy = 'false';
+    nextBtn.disabled = true;
+    nextBtn.textContent = 'próximo →';
+    paint(null);
+  }
+
+  function stop() { if (playing) { clearInterval(playing); playing = null; } }
+
+  nextBtn.addEventListener('click', advance);
+
+  document.getElementById('mode-step').addEventListener('click', () => setMode('step'));
+  document.getElementById('mode-auto').addEventListener('click', () => setMode('auto'));
+  function setMode(m) {
+    mode = m;
+    document.getElementById('mode-step').setAttribute('aria-pressed', String(m === 'step'));
+    document.getElementById('mode-auto').setAttribute('aria-pressed', String(m === 'auto'));
+    if (frames.length) {
+      if (m === 'auto') { nextBtn.disabled = true; stop(); playing = setInterval(advance, 620); }
+      else { stop(); nextBtn.disabled = false; }
+    }
+  }
+
+  // ---------- chamadas ----------
+  const v1 = document.getElementById('v1'), i2 = document.getElementById('i2'), v2 = document.getElementById('v2');
+  const LETTERS = 'abcdefghij';
+
+  function run(op) {
+    if (callsEl.dataset.busy === 'true') return;
+    if (op === 'ins1') {
+      const el = v1.value.trim() || 'a';
+      start(traceIns1(state, el), 'inserir("' + el + '")');
+      v1.value = LETTERS[(LETTERS.indexOf(el) + 1) % LETTERS.length] || 'a';
+    } else if (op === 'ins2') {
+      const idx = parseInt(i2.value, 10);
+      const el = v2.value.trim() || 'x';
+      start(traceIns2(state, isNaN(idx) ? 0 : idx, el), 'inserir(' + (isNaN(idx) ? 0 : idx) + ', "' + el + '")');
+    } else if (op === 'rem') start(traceRem(state), 'removerNoFinal()');
+    else if (op === 'tam') start(traceTam(state), 'obterTamanho()');
+    else if (op === 'imp') start(traceImp(state), 'imprimir()');
+  }
+
+  callsEl.querySelectorAll('.run').forEach(b => b.addEventListener('click', () => run(b.dataset.op)));
+  v1.addEventListener('keydown', e => { if (e.key === 'Enter') run('ins1'); });
+  [i2, v2].forEach(inp => inp.addEventListener('keydown', e => { if (e.key === 'Enter') run('ins2'); }));
+
+  document.getElementById('reset').addEventListener('click', () => {
+    stop(); frames = []; fi = -1;
+    state = fresh();
+    callsEl.dataset.busy = 'false';
+    nextBtn.disabled = true; nextBtn.textContent = 'próximo →';
+    callchip.textContent = 'nenhuma chamada'; callchip.classList.add('idle');
+    v1.value = 'a'; i2.value = '0'; v2.value = 'x';
+    paint(null);
+  });
+
+  document.addEventListener('keydown', e => {
+    if (e.target.tagName === 'INPUT') return;
+    if ((e.key === 'ArrowRight' || e.key === ' ') && frames.length && mode === 'step') { e.preventDefault(); advance(); }
+    if (e.key === 'Escape' && frames.length) finish();
+  });
+
+  addEventListener('resize', () => paint(fi >= 0 ? frames[fi] : null));
+  srcEl.addEventListener('scroll', () => { if (fi >= 0) drawWire(frames[fi]); });
+
+  paint(null);
+})();
+</script>

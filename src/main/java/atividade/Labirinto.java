@@ -96,7 +96,7 @@ public class Labirinto {
         }
 
         limparBecos();
-        System.out.println("Sem solução");
+        System.out.println("Nenhum caminho encontrado.");
     }
 
     private Posicao proximaLivre(Posicao atual) {
